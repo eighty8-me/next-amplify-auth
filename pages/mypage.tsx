@@ -1,8 +1,9 @@
 import React from 'react';
 import { useRouter } from 'next/router';
-import { Authenticator, withAuthenticator } from '@aws-amplify/ui-react';
+import { Auth } from 'aws-amplify';
+import { Authenticator } from '@aws-amplify/ui-react';
+import { getServices } from '../lib/amplifyAuthServices';
 import type { NextPage, GetServerSideProps } from 'next';
-import type { AuthEventData } from '@aws-amplify/ui';
 import type { WithAuthenticatorProps } from '@aws-amplify/ui-react';
 
 type ServerPropsType = {
@@ -10,32 +11,29 @@ type ServerPropsType = {
 }
 type PropsType = ServerPropsType & WithAuthenticatorProps;
 
-const MyPage: NextPage<PropsType> = (props) => {
+const MyPage: NextPage<PropsType> = () => {
   const router = useRouter();
+  const services = getServices(router, { signIn: '/mypage' });
 
-  const handleSignOut = (signOut: ((data?: AuthEventData | undefined) => void) | undefined) => {
-    if (!signOut) {
-      return;
-    }
-    signOut();
-
+  const handleSignOut = () => {
+    Auth.signOut();
     router.replace('/');
   }
 
   return (
-    <div>
-      <h1>マイページ</h1>
-      <p>
-        <a href="/">トップへ</a>
-      </p>
-      <p>
-        <button onClick={() => handleSignOut(props.signOut)}>サインアウト</button>
-      </p>
-    </div>
+    <Authenticator services={services}>
+      <>
+        <h1>マイページ</h1>
+        <p>
+          <a href="/">トップへ</a>
+        </p>
+        <button onClick={handleSignOut}>サインアウト</button>
+      </>
+    </Authenticator>
   )
 }
 
-export default withAuthenticator(MyPage);
+export default MyPage;
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   return {
